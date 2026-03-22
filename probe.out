@@ -1,0 +1,18 @@
+404 | https://api.openai.com/v1/workflows/wf_69b9776abb6c81908a4a4c9e9d92eba1090dfb0a0f703f85/runs
+  { "error": { "message": "Invalid URL (POST /v1/workflows/wf_69b9776abb6c81908a4a4c9e9d92eba1090dfb0a0f703f85/runs)", "type": "invalid_request_error", "param": null, "code": null } }
+404 | https://api.openai.com/v1/workflows/wf_69b9776abb6c81908a4a4c9e9d92eba1090dfb0a0f703f85/execute
+  { "error": { "message": "Invalid URL (POST /v1/workflows/wf_69b9776abb6c81908a4a4c9e9d92eba1090dfb0a0f703f85/execute)", "type": "invalid_request_error", "param": null, "code": null } }
+400 | https://api.openai.com/v1/workflows/runs
+  { "error": { "message": "You must provide the 'OpenAI-Beta' header to access workflows run endpoints. Please try again by setting the header 'OpenAI-Beta: workflowsapi_beta=v1'.", "type": "invalid_request_error", "param"
+404 | https://api.openai.com/v1/workflows/execute
+  { "error": { "message": "Invalid URL (POST /v1/workflows/execute)", "type": "invalid_request_error", "param": null, "code": null } }
+404 | https://api.openai.com/v1/agents/wf_69b9776abb6c81908a4a4c9e9d92eba1090dfb0a0f703f85/runs
+  
+404 | https://api.openai.com/v1/workflow_runs
+  { "error": { "message": "Invalid URL (POST /v1/workflow_runs)", "type": "invalid_request_error", "param": null, "code": null } }
+400 | https://api.openai.com/v1/responses
+  { "error": { "message": "Unknown parameter: 'workflow_id'.", "type": "invalid_request_error", "param": "workflow_id", "code": "unknown_parameter" } }
+400 | https://api.openai.com/v1/responses
+  { "error": { "message": "Unknown parameter: 'workflow'.", "type": "invalid_request_error", "param": "workflow", "code": "unknown_parameter" } }
+200 | https://api.openai.com/v1/responses
+  { "id": "resp_0c6ab97ecb13a9b30069bfd3c8ec8c8196b469fdd6b0f77fb3", "object": "response", "created_at": 1774179272, "status": "completed", "background": false, "billing": { "payer": "openai" }, "completed_at": 1774179274,

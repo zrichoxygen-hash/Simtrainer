@@ -1,0 +1,14 @@
+{
+  "name": "simventes",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Simulation Innovation - Chat UI with secure OpenAI backend proxy",
+  "main": "server.js",
+  "dependencies": {
+    "@openai/agents": "^0.0.14",
+    "zod": "^3.24.2"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}

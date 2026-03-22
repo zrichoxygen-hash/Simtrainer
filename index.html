@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulation Innovation</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-content">
+            <h1>SIMULATION INNOVATION - SESSION #1245</h1>
+            <div class="user-info">
+                <a href="/admin.html" class="admin-entry">Admin Prompt ID</a>
+                <div class="user-details">
+                    <div class="user-label">User info</div>
+                    <div class="user-email">ssimurinfo@pfo.com</div>
+                </div>
+                <div class="user-avatar">
+                    <img src="https://picsum.photos/seed/user-avatar/32/32.jpg" alt="User Avatar">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="panel step-panel">
+            <h2>ETAPE PAR ETAPE</h2>
+            <div class="steps" id="steps-list"></div>
+        </div>
+
+        <div class="panel chat-panel">
+            <h2>CHAT INTERFACE</h2>
+            <div class="prompt-toolbar">
+                <label for="prompt-select">Prompt:</label>
+                <select id="prompt-select" class="prompt-select">
+                    <option value="">Chargement...</option>
+                </select>
+                <button id="testeur-toggle" class="testeur-btn" title="Activer le mode testeur (simulation etudiant IA)">
+                    <span class="testeur-btn-icon">&#9654;</span> TESTEUR
+                </button>
+                <span class="session-meta" id="session-meta">Aucune conversation active</span>
+            </div>
+            <div class="chat-messages"></div>
+
+            <div class="typing-indicator">
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+
+            <div class="chat-input">
+                <div class="chat-input-row">
+                    <input type="text" placeholder="Saisissez votre reponse..." class="input-field">
+                    <button class="send-button">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M1 8L14 1L8 8L14 15L1 8Z" fill="white"/>
+                        </svg>
+                        ENVOYER
+                    </button>
+                </div>
+                <div class="console-errors">
+                    <span>Send console errors (0)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel evaluation-panel">
+            <h2>NOTES D'EVALUATION</h2>
+            <div class="evaluation-content">
+                <div class="radar-chart">
+                    <svg id="radar-svg" width="180" height="180" viewBox="0 0 180 180">
+                        <defs>
+                            <linearGradient id="radarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#00FF88;stop-opacity:0.8" />
+                                <stop offset="50%" style="stop-color:#00D4FF;stop-opacity:0.8" />
+                                <stop offset="100%" style="stop-color:#7B2FF7;stop-opacity:0.8" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+
+                <div class="metrics" id="metrics-list"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Prompt ID</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+  <script src="admin.js" defer></script>
+</head>
+<body>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <div class="bg-orb orb-3"></div>
+
+  <header class="admin-header glow-border">
+    <div class="title-wrap">
+      <h1>Prompt Control Room</h1>
+      <p>Lecture et modification de <strong>promptid</strong> en temps reel.</p>
+    </div>
+    <div class="header-actions">
+      <input id="admin-token" class="token-input" type="password" placeholder="ADMIN_TOKEN">
+      <a class="ghost-btn" href="/">Retour simulation</a>
+    </div>
+  </header>
+
+  <main class="admin-layout">
+    <section class="panel list-panel glow-border">
+      <div class="panel-title-row">
+        <h2>Prompts</h2>
+        <div class="mini-actions">
+          <button id="create-prompt" class="ghost-btn">Nouveau</button>
+          <button id="refresh-list" class="ghost-btn">Rafraichir</button>
+        </div>
+      </div>
+      <input id="search-input" class="search-input" type="text" placeholder="Filtrer par titre, prompt_id, categorie...">
+      <div id="prompt-list" class="prompt-list"></div>
+    </section>
+
+    <section class="panel editor-panel glow-border">
+      <div class="panel-title-row">
+        <h2>Edition</h2>
+        <div id="status-chip" class="status-chip idle">Pret</div>
+      </div>
+
+      <form id="prompt-form" class="editor-form">
+        <div class="grid two-col">
+          <label>
+            Prompt ID
+            <input id="field-prompt-id" name="prompt_id" type="text" disabled>
+          </label>
+
+          <label>
+            Actif
+            <select id="field-actif" name="actif">
+              <option value="true">true</option>
+              <option value="false">false</option>
+            </select>
+          </label>
+
+          <label>
+            Titre
+            <input id="field-titre" name="titre" type="text">
+          </label>
+
+          <label>
+            Categorie
+            <input id="field-categorie" name="categorie" type="text" placeholder="ex: retail, b2b...">
+          </label>
+
+          <label>
+            Version
+            <input id="field-version" name="version" type="text" placeholder="ex: v2">
+          </label>
+
+          <label>
+            Description
+            <input id="field-description" name="description" type="text">
+          </label>
+        </div>
+
+        <label>
+          System Prompt
+          <textarea id="field-systemprompt" name="systemprompt" rows="4"></textarea>
+        </label>
+
+        <label>
+          Prompt Messages
+          <textarea id="field-promptmessages" name="promptmessages" rows="4"></textarea>
+        </label>
+
+        <label>
+          Prompt Evaluateur
+          <textarea id="field-prompt-evaluateur" name="prompt_evaluateur" rows="3"></textarea>
+        </label>
+
+        <div class="grid two-col json-blocks">
+          <label>
+            Stages (JSON array)
+            <textarea id="field-stages" name="stages" rows="8" spellcheck="false"></textarea>
+          </label>
+
+          <label>
+            Criteria (JSON array)
+            <textarea id="field-criteria" name="criteria" rows="8" spellcheck="false"></textarea>
+          </label>
+        </div>
+
+        <div class="testeur-section">
+          <div class="testeur-section-title">Agent Testeur (simulation etudiant)</div>
+          <div class="grid two-col">
+            <label>
+              Testeur Actif
+              <select id="field-testeur-actif" name="testeur_actif">
+                <option value="false">false</option>
+                <option value="true">true</option>
+              </select>
+            </label>
+          </div>
+          <label>
+            Prompt Testeur
+            <textarea id="field-testeur-prompt" name="testeur_prompt" rows="5" placeholder="Decris la personnalite et le profil de l'etudiant simule..."></textarea>
+          </label>
+        </div>
+
+        <div class="actions-row">
+          <button id="btn-format-json" type="button" class="ghost-btn">Formater JSON</button>
+          <div class="right-actions">
+            <button id="btn-delete" type="button" class="delete-btn">Supprimer</button>
+            <button id="btn-save" type="submit" class="save-btn">Enregistrer</button>
+          </div>
+        </div>
+      </form>
+    </section>
+  </main>
+</body>
+</html>
