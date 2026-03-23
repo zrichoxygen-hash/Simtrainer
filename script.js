@@ -769,4 +769,120 @@ document.addEventListener('DOMContentLoaded', async function () {
     document.querySelector('.console-errors span').textContent = `Send console errors (${errorCount})`;
     originalError.apply(console, args);
   };
+
+  // Initialize resizable panels
+  initializeResizablePanels();
 });
+
+// Resizable Panels System
+function initializeResizablePanels() {
+  const container = document.querySelector('.container');
+  const stepPanel = document.querySelector('.step-panel');
+  const chatPanel = document.querySelector('.chat-panel');
+  const evalPanel = document.querySelector('.evaluation-panel');
+
+  if (!container || !stepPanel || !chatPanel || !evalPanel) return;
+
+  // Store initial proportions
+  const savedSizes = localStorage.getItem('panel_sizes');
+  let panelSizes = savedSizes ? JSON.parse(savedSizes) : {
+    stepWidth: 1,
+    chatWidth: 2,
+    stepHeight: 1,
+    evalHeight: 1
+  };
+
+  // Function to update grid layout
+  function updateGridLayout() {
+    container.style.gridTemplateColumns = `${panelSizes.stepWidth}fr ${panelSizes.chatWidth}fr`;
+    container.style.gridTemplateRows = `${panelSizes.stepHeight}fr ${panelSizes.evalHeight}fr`;
+    localStorage.setItem('panel_sizes', JSON.stringify(panelSizes));
+  }
+
+  // Add resize handle between left and right (step/eval vs chat)
+  const rightHandle = document.createElement('div');
+  rightHandle.className = 'resize-handle resize-handle-right';
+  rightHandle.title = 'Drag to resize panels';
+  container.appendChild(rightHandle);
+
+  // Add resize handle between top and bottom (step vs eval)
+  const bottomHandle = document.createElement('div');
+  bottomHandle.className = 'resize-handle resize-handle-bottom';
+  bottomHandle.title = 'Drag to resize panels';
+  stepPanel.appendChild(bottomHandle);
+
+  // Horizontal resize (left-right)
+  let isResizingHorizontal = false;
+  let startX = 0;
+  let startColWidths = { step: 1, chat: 2 };
+
+  rightHandle.addEventListener('mousedown', (e) => {
+    isResizingHorizontal = true;
+    startX = e.clientX;
+    startColWidths = { step: panelSizes.stepWidth, chat: panelSizes.chatWidth };
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isResizingHorizontal) return;
+
+    const delta = e.clientX - startX;
+    const containerWidth = container.offsetWidth;
+    const totalFr = startColWidths.step + startColWidths.chat;
+    const pixelPerFr = containerWidth / totalFr;
+
+    const newDelta = delta / pixelPerFr;
+    panelSizes.stepWidth = Math.max(0.5, Math.min(startColWidths.step + newDelta, 3));
+    panelSizes.chatWidth = Math.max(1, Math.min(startColWidths.chat - newDelta, 3.5));
+
+    updateGridLayout();
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (isResizingHorizontal) {
+      isResizingHorizontal = false;
+      document.body.style.cursor = 'auto';
+      document.body.style.userSelect = 'auto';
+    }
+  });
+
+  // Vertical resize (top-bottom within left column)
+  let isResizingVertical = false;
+  let startY = 0;
+  let startRowHeights = { step: 1, eval: 1 };
+
+  bottomHandle.addEventListener('mousedown', (e) => {
+    isResizingVertical = true;
+    startY = e.clientY;
+    startRowHeights = { step: panelSizes.stepHeight, eval: panelSizes.evalHeight };
+    document.body.style.cursor = 'row-resize';
+    document.body.style.userSelect = 'none';
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isResizingVertical) return;
+
+    const delta = e.clientY - startY;
+    const containerHeight = container.offsetHeight;
+    const totalFr = startRowHeights.step + startRowHeights.eval;
+    const pixelPerFr = containerHeight / totalFr;
+
+    const newDelta = delta / pixelPerFr;
+    panelSizes.stepHeight = Math.max(0.5, Math.min(startRowHeights.step + newDelta, 2));
+    panelSizes.evalHeight = Math.max(0.5, Math.min(startRowHeights.eval - newDelta, 2));
+
+    updateGridLayout();
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (isResizingVertical) {
+      isResizingVertical = false;
+      document.body.style.cursor = 'auto';
+      document.body.style.userSelect = 'auto';
+    }
+  });
+
+  // Apply saved sizes on load
+  updateGridLayout();
+}
