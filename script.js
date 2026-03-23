@@ -429,7 +429,6 @@ class ChatAgent {
               ${hasLine ? '<div class="step-line"></div>' : ''}
             </div>
             <div class="step-content">
-              <div class="step-number">${index + 1}.</div>
               <div class="step-text">${stage}</div>
             </div>
           </div>
@@ -520,19 +519,181 @@ class ChatAgent {
 
     if (!Array.isArray(radarData) || !radarData.length) {
       const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      text.setAttribute('x', '90');
-      text.setAttribute('y', '92');
+      text.setAttribute('x', '150');
+      text.setAttribute('y', '150');
       text.setAttribute('text-anchor', 'middle');
       text.setAttribute('fill', 'rgba(255,255,255,0.65)');
-      text.setAttribute('font-size', '12');
+      text.setAttribute('font-size', '14');
       text.textContent = 'Pas de score disponible';
       svg.appendChild(text);
       return;
     }
 
-    const cx = 90;
-    const cy = 90;
-    const maxRadius = 62;
+    const numCriteria = radarData.length;
+
+    // Adapter le graphique selon le nombre de critères
+    if (numCriteria === 1) {
+      this.drawGaugeChart(svg, radarData);
+    } else if (numCriteria <= 3) {
+      this.drawLinearChart(svg, radarData);
+    } else {
+      this.drawRadarChart(svg, radarData);
+    }
+  }
+
+  drawGaugeChart(svg, radarData) {
+    const item = radarData[0];
+    const value = Math.max(0, Math.min(20, Number(item.value) || 0));
+    const percentage = (value / 20) * 100;
+
+    const cx = 150;
+    const cy = 150;
+    const outerRadius = 90;
+    const innerRadius = 60;
+
+    // Fond circulaire
+    const bgCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    bgCircle.setAttribute('cx', String(cx));
+    bgCircle.setAttribute('cy', String(cy));
+    bgCircle.setAttribute('r', String(outerRadius));
+    bgCircle.setAttribute('fill', 'rgba(255,255,255,0.02)');
+    svg.appendChild(bgCircle);
+
+    // Anneau gris (fond)
+    const bgRing = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    bgRing.setAttribute('cx', String(cx));
+    bgRing.setAttribute('cy', String(cy));
+    bgRing.setAttribute('r', String(innerRadius));
+    bgRing.setAttribute('fill', 'none');
+    bgRing.setAttribute('stroke', 'rgba(255,255,255,0.1)');
+    bgRing.setAttribute('stroke-width', String(outerRadius - innerRadius));
+    svg.appendChild(bgRing);
+
+    // Anneau coloré (valeur)
+    const circumference = 2 * Math.PI * ((outerRadius + innerRadius) / 2);
+    const strokeDashoffset = circumference * (1 - percentage / 100);
+
+    const gauge = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    gauge.setAttribute('cx', String(cx));
+    gauge.setAttribute('cy', String(cy));
+    gauge.setAttribute('r', String((outerRadius + innerRadius) / 2));
+    gauge.setAttribute('fill', 'none');
+    gauge.setAttribute('stroke', 'url(#radarGradient)');
+    gauge.setAttribute('stroke-width', String(outerRadius - innerRadius));
+    gauge.setAttribute('stroke-dasharray', String(circumference));
+    gauge.setAttribute('stroke-dashoffset', String(strokeDashoffset));
+    gauge.setAttribute('stroke-linecap', 'round');
+    gauge.setAttribute('transform', `rotate(-90 ${cx} ${cy})`);
+    gauge.setAttribute('filter', 'drop-shadow(0 0 8px rgba(0, 212, 255, 0.4))');
+    svg.appendChild(gauge);
+
+    // Texte central: valeur
+    const valueText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    valueText.setAttribute('x', String(cx));
+    valueText.setAttribute('y', String(cy - 10));
+    valueText.setAttribute('text-anchor', 'middle');
+    valueText.setAttribute('fill', '#ffffff');
+    valueText.setAttribute('font-size', '36');
+    valueText.setAttribute('font-weight', '700');
+    valueText.textContent = Math.round(value);
+    svg.appendChild(valueText);
+
+    const maxText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    maxText.setAttribute('x', String(cx));
+    maxText.setAttribute('y', String(cy + 10));
+    maxText.setAttribute('text-anchor', 'middle');
+    maxText.setAttribute('fill', 'rgba(255,255,255,0.6)');
+    maxText.setAttribute('font-size', '12');
+    maxText.textContent = '/ 20';
+    svg.appendChild(maxText);
+
+    // Label du critère
+    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    label.setAttribute('x', String(cx));
+    label.setAttribute('y', '30');
+    label.setAttribute('text-anchor', 'middle');
+    label.setAttribute('fill', 'rgba(255,255,255,0.75)');
+    label.setAttribute('font-size', '14');
+    label.setAttribute('font-weight', '600');
+    
+    // Tronquer le label s'il est trop long
+    const labelText = String(item.label || '').substring(0, 25);
+    label.textContent = labelText;
+    svg.appendChild(label);
+  }
+
+  drawLinearChart(svg, radarData) {
+    const startX = 20;
+    const endX = 280;
+    const barHeight = 30;
+    const spacing = 60;
+    const cx = (startX + endX) / 2;
+    const startY = 80;
+
+    // Titre
+    const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    title.setAttribute('x', String(cx));
+    title.setAttribute('y', '35');
+    title.setAttribute('text-anchor', 'middle');
+    title.setAttribute('fill', 'rgba(255,255,255,0.7)');
+    title.setAttribute('font-size', '12');
+    title.textContent = 'Scores par critère';
+    svg.appendChild(title);
+
+    radarData.forEach((item, index) => {
+      const value = Math.max(0, Math.min(20, Number(item.value) || 0));
+      const percentage = (value / 20) * 100;
+      const y = startY + index * spacing;
+
+      // Label
+      const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      label.setAttribute('x', String(startX));
+      label.setAttribute('y', String(y + 5));
+      label.setAttribute('fill', 'rgba(255,255,255,0.8)');
+      label.setAttribute('font-size', '12');
+      label.setAttribute('font-weight', '500');
+      const labelText = String(item.label || '').substring(0, 20);
+      label.textContent = labelText;
+      svg.appendChild(label);
+
+      // Barre de fond
+      const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      bgRect.setAttribute('x', String(startX));
+      bgRect.setAttribute('y', String(y + 15));
+      bgRect.setAttribute('width', String(endX - startX));
+      bgRect.setAttribute('height', String(barHeight));
+      bgRect.setAttribute('fill', 'rgba(255,255,255,0.08)');
+      bgRect.setAttribute('rx', '4');
+      svg.appendChild(bgRect);
+
+      // Barre colorée
+      const fillWidth = ((endX - startX) * percentage) / 100;
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', String(startX));
+      rect.setAttribute('y', String(y + 15));
+      rect.setAttribute('width', String(fillWidth));
+      rect.setAttribute('height', String(barHeight));
+      rect.setAttribute('fill', 'url(#radarGradient)');
+      rect.setAttribute('rx', '4');
+      rect.setAttribute('filter', 'drop-shadow(0 0 6px rgba(0, 212, 255, 0.35))');
+      svg.appendChild(rect);
+
+      // Score texte
+      const scoreText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      scoreText.setAttribute('x', String(endX + 10));
+      scoreText.setAttribute('y', String(y + 30));
+      scoreText.setAttribute('fill', '#ffffff');
+      scoreText.setAttribute('font-size', '13');
+      scoreText.setAttribute('font-weight', '600');
+      scoreText.textContent = `${Math.round(value)}/20`;
+      svg.appendChild(scoreText);
+    });
+  }
+
+  drawRadarChart(svg, radarData) {
+    const cx = 150;
+    const cy = 140;
+    const maxRadius = 85;
     const rings = [0.25, 0.5, 0.75, 1];
     const total = radarData.length;
 
@@ -545,6 +706,7 @@ class ChatAgent {
       };
     };
 
+    // Grille de fond
     rings.forEach((ring) => {
       const points = radarData
         .map((_, index) => pointAt(index, ring))
@@ -558,6 +720,7 @@ class ChatAgent {
       svg.appendChild(polygon);
     });
 
+    // Axes et labels
     radarData.forEach((item, index) => {
       const axis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
       const p = pointAt(index, 1);
@@ -569,21 +732,33 @@ class ChatAgent {
       axis.setAttribute('stroke-width', '1');
       svg.appendChild(axis);
 
-      const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      const lp = pointAt(index, 1.15);
-      label.setAttribute('x', String(lp.x));
-      label.setAttribute('y', String(lp.y));
-      label.setAttribute('text-anchor', 'middle');
-      label.setAttribute('dominant-baseline', 'middle');
-      label.setAttribute('fill', 'rgba(255,255,255,0.75)');
-      label.setAttribute('font-size', '10');
-      label.setAttribute('font-weight', '500');
-      // Texte complet sans troncature
-      label.textContent = item.label;
-      label.setAttribute('class', 'radar-label');
-      svg.appendChild(label);
+      // Label avec wrapping
+      const lp = pointAt(index, 1.22);
+      const labelText = String(item.label || '');
+      
+      // Diviser le texte si trop long
+      const maxCharsPerLine = 8;
+      const lines = [];
+      
+      for (let i = 0; i < labelText.length; i += maxCharsPerLine) {
+        lines.push(labelText.substring(i, i + maxCharsPerLine));
+      }
+
+      lines.forEach((line, lineIndex) => {
+        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        label.setAttribute('x', String(lp.x));
+        label.setAttribute('y', String(lp.y + lineIndex * 11));
+        label.setAttribute('text-anchor', 'middle');
+        label.setAttribute('dominant-baseline', 'middle');
+        label.setAttribute('fill', 'rgba(255,255,255,0.75)');
+        label.setAttribute('font-size', '10');
+        label.setAttribute('font-weight', '500');
+        label.textContent = line;
+        svg.appendChild(label);
+      });
     });
 
+    // Polygon des valeurs
     const valuePoints = radarData
       .map((item, index) => {
         const value = Math.max(0, Math.min(20, Number(item.value) || 0));
@@ -595,15 +770,17 @@ class ChatAgent {
     shape.setAttribute('fill', 'url(#radarGradient)');
     shape.setAttribute('fill-opacity', '0.55');
     shape.setAttribute('stroke', 'rgba(255,255,255,0.8)');
-    shape.setAttribute('stroke-width', '1.2');
+    shape.setAttribute('stroke-width', '1.5');
     svg.appendChild(shape);
 
+    // Points de valeur
     valuePoints.forEach((p) => {
       const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
       dot.setAttribute('cx', String(p.x));
       dot.setAttribute('cy', String(p.y));
-      dot.setAttribute('r', '2.4');
+      dot.setAttribute('r', '3');
       dot.setAttribute('fill', '#ffffff');
+      dot.setAttribute('filter', 'drop-shadow(0 0 4px rgba(0, 212, 255, 0.6))');
       svg.appendChild(dot);
     });
   }
@@ -786,24 +963,29 @@ function initializeResizablePanels() {
   // Store initial proportions
   const savedSizes = localStorage.getItem('panel_sizes');
   let panelSizes = savedSizes ? JSON.parse(savedSizes) : {
-    stepWidth: 1,
-    chatWidth: 2,
+    leftWidth: Math.round(stepPanel.getBoundingClientRect().width || 340),
     stepHeight: 1,
     evalHeight: 1
   };
 
+  if (!Number.isFinite(panelSizes.leftWidth)) {
+    panelSizes.leftWidth = Math.round(stepPanel.getBoundingClientRect().width || 340);
+  }
+
   // Function to update grid layout
   function updateGridLayout() {
-    container.style.gridTemplateColumns = `${panelSizes.stepWidth}fr ${panelSizes.chatWidth}fr`;
+    const leftWidth = Math.max(220, Math.min(Number(panelSizes.leftWidth) || 340, 520));
+    panelSizes.leftWidth = leftWidth;
+    container.style.gridTemplateColumns = `${leftWidth}px minmax(0, 1fr)`;
     container.style.gridTemplateRows = `${panelSizes.stepHeight}fr ${panelSizes.evalHeight}fr`;
     localStorage.setItem('panel_sizes', JSON.stringify(panelSizes));
   }
 
-  // Add resize handle between left and right (step/eval vs chat)
-  const rightHandle = document.createElement('div');
-  rightHandle.className = 'resize-handle resize-handle-right';
-  rightHandle.title = 'Drag to resize panels';
-  container.appendChild(rightHandle);
+  // Add resize handle on the right edge of left sidebar
+  const sideHandle = document.createElement('div');
+  sideHandle.className = 'resize-handle resize-handle-side';
+  sideHandle.title = 'Drag to resize sidebar';
+  stepPanel.appendChild(sideHandle);
 
   // Add resize handle between top and bottom (step vs eval)
   const bottomHandle = document.createElement('div');
@@ -814,27 +996,22 @@ function initializeResizablePanels() {
   // Horizontal resize (left-right)
   let isResizingHorizontal = false;
   let startX = 0;
-  let startColWidths = { step: 1, chat: 2 };
+  let startLeftWidth = panelSizes.leftWidth;
 
-  rightHandle.addEventListener('mousedown', (e) => {
+  sideHandle.addEventListener('mousedown', (e) => {
     isResizingHorizontal = true;
     startX = e.clientX;
-    startColWidths = { step: panelSizes.stepWidth, chat: panelSizes.chatWidth };
+    startLeftWidth = Number(panelSizes.leftWidth) || stepPanel.getBoundingClientRect().width;
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
+    e.preventDefault();
   });
 
   document.addEventListener('mousemove', (e) => {
     if (!isResizingHorizontal) return;
 
     const delta = e.clientX - startX;
-    const containerWidth = container.offsetWidth;
-    const totalFr = startColWidths.step + startColWidths.chat;
-    const pixelPerFr = containerWidth / totalFr;
-
-    const newDelta = delta / pixelPerFr;
-    panelSizes.stepWidth = Math.max(0.5, Math.min(startColWidths.step + newDelta, 3));
-    panelSizes.chatWidth = Math.max(1, Math.min(startColWidths.chat - newDelta, 3.5));
+    panelSizes.leftWidth = Math.max(220, Math.min(startLeftWidth + delta, 520));
 
     updateGridLayout();
   });

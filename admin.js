@@ -1,7 +1,9 @@
 const state = {
   prompts: [],
   selectedKey: null,
-  adminToken: ''
+  adminToken: '',
+  currentStages: [],
+  currentCriteria: []
 };
 
 const els = {
@@ -21,8 +23,6 @@ const els = {
   systemprompt: document.getElementById('field-systemprompt'),
   promptmessages: document.getElementById('field-promptmessages'),
   promptEvaluateur: document.getElementById('field-prompt-evaluateur'),
-  stages: document.getElementById('field-stages'),
-  criteria: document.getElementById('field-criteria'),
   testeurActif: document.getElementById('field-testeur-actif'),
   testeurPrompt: document.getElementById('field-testeur-prompt'),
   formatJsonBtn: document.getElementById('btn-format-json'),
@@ -196,8 +196,13 @@ function fillForm(prompt) {
   els.systemprompt.value = prompt.systemprompt || '';
   els.promptmessages.value = prompt.promptmessages || '';
   els.promptEvaluateur.value = prompt.prompt_evaluateur || '';
-  els.stages.value = prettyJson(prompt.stages, []);
-  els.criteria.value = prettyJson(prompt.criteria, []);
+  
+  // Render UI components instead of textareas
+  state.currentStages = Array.isArray(prompt.stages) ? [...prompt.stages] : [];
+  state.currentCriteria = Array.isArray(prompt.criteria) ? JSON.parse(JSON.stringify(prompt.criteria)) : [];
+  renderStagesList();
+  renderCriteriaList();
+  
   const testeur = (prompt.testeur && typeof prompt.testeur === 'object') ? prompt.testeur : {};
   els.testeurActif.value = String(testeur.actif ?? 'false').toLowerCase() === 'true' ? 'true' : 'false';
   els.testeurPrompt.value = String(testeur.prompt || '');
@@ -214,18 +219,104 @@ async function loadPromptDetail(promptKey) {
 }
 
 function formatJsonFields() {
-  const stages = parseJsonField(els.stages.value, [], 'Stages');
-  const criteria = parseJsonField(els.criteria.value, [], 'Criteria');
-
-  els.stages.value = prettyJson(stages, []);
-  els.criteria.value = prettyJson(criteria, []);
-
+  // This function is now kept for backward compatibility but does nothing
   setStatus('JSON formate', 'success');
 }
 
+function renderStagesList() {
+  const container = document.getElementById('stages-list');
+  if (!container) return;
+
+  container.innerHTML = '';
+  state.currentStages.forEach((stage, index) => {
+    const row = document.createElement('div');
+    row.className = 'item-edit-row';
+    row.innerHTML = `
+      <input 
+        type="text" 
+        value="${stage}" 
+        placeholder="Nom d'etape..."
+        data-stage-index="${index}"
+        class="stage-input"
+      >
+      <button type="button" class="item-remove-btn" data-stage-index="${index}">Supprimer</button>
+    `;
+
+    const input = row.querySelector('.stage-input');
+    input.addEventListener('input', (e) => {
+      state.currentStages[index] = e.target.value;
+    });
+
+    const removeBtn = row.querySelector('.item-remove-btn');
+    removeBtn.addEventListener('click', () => {
+      state.currentStages.splice(index, 1);
+      renderStagesList();
+    });
+
+    container.appendChild(row);
+  });
+}
+
+function renderCriteriaList() {
+  const container = document.getElementById('criteria-list');
+  if (!container) return;
+
+  container.innerHTML = '';
+  state.currentCriteria.forEach((criterion, index) => {
+    const row = document.createElement('div');
+    row.className = 'item-edit-row';
+    const nom = String(criterion.nom || criterion.name || '');
+    const coefficient = Number(criterion.coefficient) || 1;
+    
+    row.innerHTML = `
+      <input 
+        type="text" 
+        value="${nom}" 
+        placeholder="Nom du critere..."
+        data-criteria-index="${index}"
+        class="criteria-name-input"
+      >
+      <input 
+        type="number" 
+        value="${coefficient}" 
+        min="0.1" 
+        step="0.1"
+        class="criteria-coef-input item-coefficient"
+        data-criteria-index="${index}"
+      >
+      <button type="button" class="item-remove-btn" data-criteria-index="${index}">Supprimer</button>
+    `;
+
+    const nameInput = row.querySelector('.criteria-name-input');
+    nameInput.addEventListener('input', (e) => {
+      state.currentCriteria[index].nom = e.target.value;
+    });
+
+    const coefInput = row.querySelector('.criteria-coef-input');
+    coefInput.addEventListener('input', (e) => {
+      state.currentCriteria[index].coefficient = Number(e.target.value) || 1;
+    });
+
+    const removeBtn = row.querySelector('.item-remove-btn');
+    removeBtn.addEventListener('click', () => {
+      state.currentCriteria.splice(index, 1);
+      renderCriteriaList();
+    });
+
+    container.appendChild(row);
+  });
+}
+
 function buildFormPayload() {
-  const stages = parseJsonField(els.stages.value, [], 'Stages');
-  const criteria = parseJsonField(els.criteria.value, [], 'Criteria');
+  // Build stages array from UI
+  const stages = [...state.currentStages];
+  
+  // Build criteria array from UI
+  const criteria = state.currentCriteria.map(item => {
+    const nom = String(item.nom || item.name || '').trim();
+    const coefficient = Number(item.coefficient) || 1;
+    return { nom, coefficient };
+  });
 
   const payload = {
     actif: els.actif.value,
@@ -352,6 +443,17 @@ function bootstrapToken() {
 }
 
 bootstrapToken();
+
+function addStage() {
+  state.currentStages.push('Nouvelle etape');
+  renderStagesList();
+}
+
+function addCriteria() {
+  state.currentCriteria.push({ nom: 'Nouveau critere', coefficient: 1 });
+  renderCriteriaList();
+}
+
 els.createBtn.addEventListener('click', createPrompt);
 els.deleteBtn.addEventListener('click', deletePrompt);
 els.refreshBtn.addEventListener('click', loadPromptList);
@@ -363,6 +465,16 @@ els.formatJsonBtn.addEventListener('click', () => {
   } catch (error) {
     setStatus(error.message, 'error');
   }
+});
+
+document.getElementById('btn-add-stage')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  addStage();
+});
+
+document.getElementById('btn-add-criteria')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  addCriteria();
 });
 
 loadPromptList().catch((error) => {

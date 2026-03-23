@@ -96,16 +96,22 @@
           <textarea id="field-prompt-evaluateur" name="prompt_evaluateur" rows="3"></textarea>
         </label>
 
-        <div class="grid two-col json-blocks">
-          <label>
-            Stages (JSON array)
-            <textarea id="field-stages" name="stages" rows="8" spellcheck="false"></textarea>
-          </label>
+        <!-- Stages Component -->
+        <div class="editor-section">
+          <div class="section-header">
+            <h3>Étapes (Stages)</h3>
+            <button type="button" id="btn-add-stage" class="ghost-btn small">+ Ajouter étape</button>
+          </div>
+          <div id="stages-list" class="items-list"></div>
+        </div>
 
-          <label>
-            Criteria (JSON array)
-            <textarea id="field-criteria" name="criteria" rows="8" spellcheck="false"></textarea>
-          </label>
+        <!-- Criteria Component -->
+        <div class="editor-section">
+          <div class="section-header">
+            <h3>Critères</h3>
+            <button type="button" id="btn-add-criteria" class="ghost-btn small">+ Ajouter critère</button>
+          </div>
+          <div id="criteria-list" class="items-list"></div>
         </div>
 
         <div class="testeur-section">

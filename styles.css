@@ -281,6 +281,11 @@ h2 {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
     padding: 16px !important;
 }
+
+.step-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .step-number {
@@ -329,6 +334,11 @@ h2 {
 }
 
 .radar-label {
+    word-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+    max-width: 45px;
+}
     font-size: 0.85em;
     fill: rgba(255, 255, 255, 0.8);
     text-anchor: middle;
@@ -632,11 +642,19 @@ h2 {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px;
+    padding: 15px;
     background: rgba(255, 255, 255, 0.02);
     border-radius: 15px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 0 20px rgba(123, 47, 247, 0.2);
+    min-height: 350px;
+    flex-shrink: 0;
+}
+
+.radar-chart .chart-svg {
+    width: 100%;
+    max-width: 320px;
+    height: auto;
 }
 
 .metrics {
@@ -750,69 +768,53 @@ h2 {
 .reset-sim-btn {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 9px 16px;
-    background: linear-gradient(135deg, rgba(0, 255, 136, 0.9), rgba(0, 212, 255, 0.9));
-    border: 1px solid rgba(0, 255, 136, 0.6);
-    border-radius: 25px;
-    color: rgba(10, 11, 30, 0.95);
+    gap: 5px;
+    padding: 5px 12px;
+    background: rgba(0, 255, 136, 0.15);
+    border: 1px solid rgba(0, 255, 136, 0.4);
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.85);
     font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.05em;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 
-        0 0 20px rgba(0, 255, 136, 0.4),
-        0 4px 15px rgba(0, 212, 255, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    position: relative;
-    overflow: hidden;
+    transition: all 0.2s ease;
 }
 
-.reset-sim-btn::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(
-        45deg,
-        transparent 30%,
-        rgba(255, 255, 255, 0.1) 50%,
-        transparent 70%
-    );
-    transform: rotate(45deg);
-    animation: shimmer 2.5s infinite;
-}
-
-@keyframes shimmer {
-    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+.reset-sim-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 6px rgba(0, 212, 255, 0.35));
+    transition: transform 0.2s ease, filter 0.2s ease;
 }
 
 .reset-sim-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 
-        0 0 30px rgba(0, 255, 136, 0.6),
-        0 8px 25px rgba(0, 212, 255, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.4);
-    background: linear-gradient(135deg, rgba(0, 255, 136, 1), rgba(0, 212, 255, 1));
+    background: rgba(0, 255, 136, 0.25);
+    border-color: rgba(0, 255, 136, 0.7);
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(0, 255, 136, 0.3);
+}
+
+.reset-sim-btn:hover .reset-sim-icon {
+    transform: rotate(-18deg);
+    filter: drop-shadow(0 0 8px rgba(0, 255, 136, 0.45));
 }
 
 .reset-sim-btn:active {
-    transform: translateY(-1px);
-    box-shadow: 
-        0 0 20px rgba(0, 255, 136, 0.5),
-        0 2px 8px rgba(0, 212, 255, 0.2),
-        inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(90deg, rgba(0, 255, 136, 0.4), rgba(0, 212, 255, 0.3));
+    border-color: rgba(0, 255, 136, 0.8);
+    color: #ffffff;
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+}
+
+.reset-sim-btn:active .reset-sim-icon {
+    transform: rotate(-35deg);
 }
 
 .reset-sim-btn:disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
-    transform: none;
 }
 
 /* Resizable Panels */
@@ -844,6 +846,15 @@ h2 {
     top: 0;
     bottom: 0;
     width: 4px;
+}
+
+.resize-handle-side {
+    top: 8px;
+    right: -2px;
+    bottom: 8px;
+    width: 6px;
+    border-radius: 999px;
+    cursor: col-resize;
 }
 
 .resize-handle-bottom {

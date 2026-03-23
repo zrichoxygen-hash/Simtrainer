@@ -41,7 +41,19 @@
                 <button id="testeur-toggle" class="testeur-btn" title="Activer le mode testeur (simulation etudiant IA)">
                     <span class="testeur-btn-icon">&#9654;</span> TESTEUR
                 </button>
-                <button id="reset-sim-btn" class="reset-sim-btn" title="Relancer la simulation" style="margin-left:1em;">🔄 Relancer la simulation</button>
+                <button id="reset-sim-btn" class="reset-sim-btn" title="Relancer la simulation" style="margin-left:1em;">
+                    <svg class="reset-sim-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M20 12A8 8 0 1 1 17.4 6.1" stroke="url(#resetSimStroke)" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M20 4V10H14" stroke="url(#resetSimStroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <defs>
+                            <linearGradient id="resetSimStroke" x1="6" y1="4" x2="20" y2="18" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stop-color="#00D4FF"/>
+                                <stop offset="100%" stop-color="#00FF88"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <span>Relancer la simulation</span>
+                </button>
                 <span class="session-meta" id="session-meta">Aucune conversation active</span>
             </div>
             <div class="chat-messages"></div>
@@ -74,7 +86,7 @@
             <h2>NOTES D'EVALUATION</h2>
             <div class="evaluation-content">
                 <div class="radar-chart">
-                    <svg id="radar-svg" width="180" height="180" viewBox="0 0 180 180">
+                    <svg id="radar-svg" class="chart-svg" viewBox="0 0 300 300" preserveAspectRatio="xMidYMid meet">
                         <defs>
                             <linearGradient id="radarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                                 <stop offset="0%" style="stop-color:#00FF88;stop-opacity:0.8" />
