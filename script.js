@@ -29,6 +29,24 @@ class ChatAgent {
     this.stageEvaluations = [];
     this.testeurActive = false;
     this.testeurPrompt = '';
+    this.simulationComplete = false;
+    // UI elements
+    this.promptSelect = document.getElementById('prompt-select');
+    this.resetSimBtn = document.getElementById('reset-sim-btn');
+    if (this.resetSimBtn) {
+      this.resetSimBtn.addEventListener('click', () => this.resetSimulation());
+    }
+    // Initialize userId if not set
+    this.setUserId(this.getOrCreateUserId());
+  }
+
+  getOrCreateUserId() {
+    let uid = localStorage.getItem('sandbox_user_id');
+    if (!uid) {
+      uid = 'U' + Math.random().toString(36).slice(2, 10).toUpperCase();
+      localStorage.setItem('sandbox_user_id', uid);
+    }
+    return uid;
   }
 
   setSelectedPrompt(promptId) {
@@ -37,6 +55,7 @@ class ChatAgent {
     this.conversationHistory = [];
     this.currentStageIndex = 0;
     this.stageEvaluations = [];
+    this.simulationComplete = false;
 
     const promptConfig = this.promptCatalog.get(this.selectedPromptId) || {};
     this.currentStages = this.normalizeStages(promptConfig.stages);
@@ -50,6 +69,11 @@ class ChatAgent {
       this.updateTesteurButton();
     }
 
+    // Griser le prompt après lancement
+    if (this.promptSelect) {
+      this.promptSelect.disabled = !!this.conversationId;
+    }
+
     this.renderStepsPanel();
     this.renderEvaluationPanel();
     this.updateSessionMeta();
@@ -57,6 +81,18 @@ class ChatAgent {
 
   setUserId(userId) {
     this.userId = userId || null;
+    this.updateUserIdUI();
+  }
+
+  updateUserIdUI() {
+    const userIdLabel = document.getElementById('user-id-label');
+    const userEmail = document.getElementById('user-email');
+    if (userIdLabel) {
+      userIdLabel.textContent = this.userId ? `ID: ${this.userId}` : '';
+    }
+    if (userEmail) {
+      userEmail.textContent = this.userId ? `${this.userId.toLowerCase()}@sandbox.corp` : '';
+    }
   }
 
   updateSessionMeta(extra = '') {
@@ -65,8 +101,17 @@ class ChatAgent {
       return;
     }
 
+    let status = 'En attente';
+    if (this.conversationId) {
+      if (this.simulationComplete) {
+        status = 'Terminé';
+      } else {
+        status = 'En cours';
+      }
+    }
+
     const base = this.conversationId
-      ? `Conversation: ${this.conversationId}`
+      ? `Conversation: ${this.conversationId} | Statut: ${status}`
       : 'Aucune conversation active';
 
     meta.textContent = extra ? `${base} | ${extra}` : base;
@@ -213,7 +258,13 @@ class ChatAgent {
 
       if (data?.conversationId) {
         this.conversationId = data.conversationId;
+        // Griser le prompt une fois la conversation lancée
+        if (this.promptSelect) {
+          this.promptSelect.disabled = true;
+        }
       }
+
+      this.simulationComplete = Boolean(data?.simulationComplete);
 
       this.conversationHistory.push(
         { role: 'user', content: userMessage },
@@ -421,10 +472,16 @@ class ChatAgent {
       return;
     }
 
-    metricsContainer.innerHTML = criteria
+    // Filtrer critères : afficher seulement ceux qui ont une note
+    const scoredCriteria = criteria.filter(criterion => {
+      const key = criterion.name.toLowerCase();
+      return scoreMap.has(key) && Number.isFinite(scoreMap.get(key));
+    });
+
+    metricsContainer.innerHTML = scoredCriteria
       .map((criterion) => {
         const key = criterion.name.toLowerCase();
-        const note = scoreMap.has(key) ? scoreMap.get(key) : null;
+        const note = scoreMap.get(key);
         const percent = Number.isFinite(note) ? Math.max(0, Math.min(100, (note / 20) * 100)) : 0;
         const scoreText = Number.isFinite(note) ? `${note}/20` : 'N/A';
 
@@ -441,7 +498,6 @@ class ChatAgent {
       })
       .join('');
 
-    const scoredCriteria = criteria.filter((criterion) => scoreMap.has(criterion.name.toLowerCase()));
     const radarData = scoredCriteria.map((criterion) => ({
       label: criterion.name,
       value: scoreMap.get(criterion.name.toLowerCase())
@@ -518,9 +574,13 @@ class ChatAgent {
       label.setAttribute('x', String(lp.x));
       label.setAttribute('y', String(lp.y));
       label.setAttribute('text-anchor', 'middle');
+      label.setAttribute('dominant-baseline', 'middle');
       label.setAttribute('fill', 'rgba(255,255,255,0.75)');
       label.setAttribute('font-size', '10');
-      label.textContent = item.label.length > 16 ? `${item.label.slice(0, 16)}...` : item.label;
+      label.setAttribute('font-weight', '500');
+      // Texte complet sans troncature
+      label.textContent = item.label;
+      label.setAttribute('class', 'radar-label');
       svg.appendChild(label);
     });
 
@@ -550,6 +610,31 @@ class ChatAgent {
 
   delay(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  resetSimulation() {
+    this.selectedPromptId = null;
+    this.conversationId = null;
+    this.conversationHistory = [];
+    this.currentStageIndex = 0;
+    this.stageEvaluations = [];
+    this.simulationComplete = false;
+    this.testeurActive = false;
+    
+    // Réactiver le prompt select
+    if (this.promptSelect) {
+      this.promptSelect.disabled = false;
+      this.promptSelect.value = '';
+    }
+    
+    // Vider le chat
+    const chatMessages = document.querySelector('.chat-messages');
+    if (chatMessages) chatMessages.innerHTML = '';
+    
+    this.updateSessionMeta();
+    this.renderEvaluationPanel();
+    this.renderStepsPanel();
+    this.updateTesteurButton();
   }
 
   async loadPromptOptions() {
@@ -641,6 +726,11 @@ document.addEventListener('DOMContentLoaded', async function () {
   const testeurToggle = document.querySelector('#testeur-toggle');
   if (testeurToggle) {
     testeurToggle.addEventListener('click', () => agent.toggleTesteur());
+  }
+
+  const resetSimBtn = document.querySelector('#reset-sim-btn');
+  if (resetSimBtn) {
+    resetSimBtn.addEventListener('click', () => agent.resetSimulation());
   }
 
   sendButton.addEventListener('click', function () {

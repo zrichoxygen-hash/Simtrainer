@@ -856,16 +856,19 @@ async function updateConversationTranscript(runner, conversationHistory, convers
   );
 }
 
-async function finalizeConversation(runner, conversationHistory, conversationId, transcript) {
-  await runSql(
-    runner,
-    conversationHistory,
-    `UPDATE public.conversation_chat_logs
+async function finalizeConversation(runner, conversationHistory, conversationId, transcript, finalGrade = null) {
+  let sql = `UPDATE public.conversation_chat_logs
      SET full_conversation_transcript = ${sqlNullableString(transcript)},
          conversation_status = 'completed',
-         updated_at = now()
-     WHERE conversation_id = '${sqlEscape(conversationId)}';`
-  );
+         updated_at = now()`;
+  
+  if (Number.isFinite(finalGrade)) {
+    sql += `, finalgrade = ${finalGrade}`;
+  }
+  
+  sql += ` WHERE conversation_id = '${sqlEscape(conversationId)}';`;
+  
+  await runSql(runner, conversationHistory, sql);
 }
 
 function toWorkflowResult(agentResult, meta) {
@@ -878,13 +881,53 @@ function toWorkflowResult(agentResult, meta) {
     simulation_complete: meta.simulation_complete,
     stages: toArray(meta.stages),
     criteria: toArray(meta.criteria),
-    stage_evaluations: toArray(meta.stage_evaluations)
+    stage_evaluations: toArray(meta.stage_evaluations),
+    finalgrade: meta.finalgrade || null
   };
 
   return {
     output_text: JSON.stringify(parsed),
     output_parsed: parsed
   };
+}
+
+// Calculer la moyenne pondérée de tous les stages
+function calculateFinalGrade(stageEvaluations, criteriaConfig) {
+  if (!Array.isArray(stageEvaluations) || !stageEvaluations.length) {
+    return null;
+  }
+
+  const criteriaCoefficients = new Map();
+  if (Array.isArray(criteriaConfig)) {
+    criteriaConfig.forEach(crit => {
+      const name = String(crit.nom || crit.critere || '').trim();
+      const coeff = Number(crit.coefficient) || 1;
+      criteriaCoefficients.set(name.toLowerCase(), coeff);
+    });
+  }
+
+  let totalWeightedScore = 0;
+  let totalCoefficients = 0;
+
+  stageEvaluations.forEach(stage => {
+    const scores = Array.isArray(stage.scores) ? stage.scores : [];
+    scores.forEach(scoreItem => {
+      const note = Number(scoreItem.note);
+      if (Number.isFinite(note)) {
+        const critName = String(scoreItem.critere || scoreItem.nom || '').trim().toLowerCase();
+        const coeff = criteriaCoefficients.get(critName) || 1;
+        totalWeightedScore += note * coeff;
+        totalCoefficients += coeff;
+      }
+    });
+  });
+
+  if (totalCoefficients === 0) {
+    return null;
+  }
+
+  const finalGrade = totalWeightedScore / totalCoefficients;
+  return Math.round(finalGrade * 100) / 100; // Arrondir à 2 décimales
 }
 
 export async function listPromptOptions() {
@@ -1064,9 +1107,14 @@ export async function runWorkflow(workflow) {
       simulationComplete = resultingStageIndex >= stagesFromLog.length;
 
       if (simulationComplete) {
-        await finalizeConversation(runner, conversationHistory, conversationId, updatedTranscript);
+        // Calculer la note finale (moyenne pondérée)
+        const finalGrade = calculateFinalGrade(stageEvaluationsForResponse, criteriaFromLog);
+        await finalizeConversation(runner, conversationHistory, conversationId, updatedTranscript, finalGrade);
       }
     }
+
+    // Calcul note finale même si pas simulationComplete
+    const finalGrade = simulationComplete ? calculateFinalGrade(stageEvaluationsForResponse, criteriaFromLog) : null;
 
     return toWorkflowResult(agent1Result, {
       conversation_id: conversationId,
@@ -1076,7 +1124,8 @@ export async function runWorkflow(workflow) {
       simulation_complete: simulationComplete,
       stages: stagesFromLog,
       criteria: criteriaFromLog,
-      stage_evaluations: stageEvaluationsForResponse
+      stage_evaluations: stageEvaluationsForResponse,
+      finalgrade: finalGrade
     });
   });
 }
