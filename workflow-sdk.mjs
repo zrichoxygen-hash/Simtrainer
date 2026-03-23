@@ -3,6 +3,20 @@ import { z } from "zod";
 
 const SUPABASE_MCP_AUTH = process.env.SUPABASE_MCP_AUTH || "";
 const SUPABASE_MCP_URL = process.env.SUPABASE_MCP_URL || "";
+const SUPABASE_URL = process.env.SUPABASE_URL || "";
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "";
+
+// Extract project ref from MCP URL or Supabase URL
+const SUPABASE_PROJECT_REF = (() => {
+  if (SUPABASE_MCP_URL) {
+    const m = SUPABASE_MCP_URL.match(/project_ref=([^&]+)/);
+    if (m?.[1]) return m[1];
+  }
+  if (SUPABASE_URL) {
+    return SUPABASE_URL.replace("https://", "").split(".")[0];
+  }
+  return "";
+})();
 
 const mcp = hostedMcpTool({
   serverLabel: "supa",
@@ -435,10 +449,55 @@ async function runSqlViaMcp(sqlQuery) {
   });
 }
 
+async function runSqlViaManagementApi(sqlQuery) {
+  if (!SUPABASE_MCP_AUTH) {
+    throw new Error("SUPABASE_MCP_AUTH manquant pour Management API");
+  }
+  if (!SUPABASE_PROJECT_REF) {
+    throw new Error("Supabase project ref introuvable");
+  }
+
+  const response = await fetch(
+    `https://api.supabase.com/v1/projects/${SUPABASE_PROJECT_REF}/database/query`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${SUPABASE_MCP_AUTH}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ query: sqlQuery })
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Supabase Management API error (${response.status}): ${errorText.slice(0, 300)}`);
+  }
+
+  const data = await response.json();
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.rows)) return data.rows;
+  if (Array.isArray(data?.result)) return data.result;
+  return [];
+}
+
 async function runSql(runner, conversationHistory, sqlQuery) {
   void runner;
   void conversationHistory;
-  return runSqlViaMcp(sqlQuery);
+
+  if (SUPABASE_MCP_URL && SUPABASE_MCP_AUTH) {
+    try {
+      return await runSqlViaMcp(sqlQuery);
+    } catch (mcpErr) {
+      console.warn("[workflow] MCP SQL failed, fallback Management API:", mcpErr.message);
+    }
+  }
+
+  if (SUPABASE_MCP_AUTH && SUPABASE_PROJECT_REF) {
+    return runSqlViaManagementApi(sqlQuery);
+  }
+
+  throw new Error("Aucune credential Supabase disponible (SUPABASE_MCP_AUTH requis)");
 }
 
 function normalizePromptConfig(promptRow) {
