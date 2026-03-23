@@ -280,7 +280,6 @@ h2 {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
     padding: 16px !important;
 }
-}
 
 .step-number {
     font-weight: 600;
@@ -558,6 +557,8 @@ h2 {
     outline: none;
     backdrop-filter: blur(5px);
     transition: all 0.3s ease;
+    pointer-events: auto;
+    cursor: text;
 }
 
 .input-field::placeholder {
@@ -567,6 +568,15 @@ h2 {
 .input-field:focus {
     border-color: rgba(0, 212, 255, 0.6);
     box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.input-field:disabled {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.3);
+    cursor: not-allowed;
+    opacity: 0.5;
 }
 
 .send-button {
